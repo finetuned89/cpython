@@ -132,13 +132,15 @@ class FTP:
                 if self.sock is not None:
                     self.close()
 
-    def connect(self, host='', port=0, timeout=-999, source_address=None):
+    def connect(self, host='', port=0, timeout=-999, source_address=None, data_address=None):
         '''Connect to host.  Arguments are:
          - host: hostname to connect to (string, default previous host)
          - port: port to connect to (integer, default previous port)
          - timeout: the timeout to set against the ftp socket(s)
          - source_address: a 2-tuple (host, port) for the socket to bind
            to as its source address before connecting.
+         - data_address: a 2-tuple (host, port) for the remote server to
+           connect to.
         '''
         if host != '':
             self.host = host
@@ -148,6 +150,7 @@ class FTP:
             self.timeout = timeout
         if source_address is not None:
             self.source_address = source_address
+        self.data_address = data_address or ("", 0)
         self.sock = socket.create_connection((self.host, self.port), self.timeout,
                                              source_address=self.source_address)
         self.af = self.sock.family
@@ -302,7 +305,7 @@ class FTP:
 
     def makeport(self):
         '''Create a new socket and send a PORT command for it.'''
-        sock = socket.create_server(("", 0), family=self.af, backlog=1)
+        sock = socket.create_server(self.data_address, family=self.af, backlog=1)
         port = sock.getsockname()[1] # Get proper port
         host = self.sock.getsockname()[0] # Get proper host
         if self.af == socket.AF_INET:
